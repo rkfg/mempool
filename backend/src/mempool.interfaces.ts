@@ -98,6 +98,7 @@ export interface TransactionExtended extends IEsploraApi.Transaction {
   replacement?: boolean;
   uid?: number;
   flags?: number;
+  spam?: boolean;
 }
 
 export interface MempoolTransactionExtended extends TransactionExtended {
