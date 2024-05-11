@@ -192,13 +192,13 @@
         <td i18n="block.miner">Miner</td>
         <td *ngIf="stateService.env.MINING_DASHBOARD">
           <a placement="bottom" [routerLink]="['/mining/pool' | relativeUrl, block.extras.pool.slug]" class="badge"
-            [class]="block.extras.pool.slug === 'unknown' ? 'badge-secondary' : 'badge-primary'">
+            [class]="block.extras.pool.slug === 'ocean' ? 'badge-primary' : 'badge-danger'">
             {{ block.extras.pool.name }}
           </a>
         </td>
         <td *ngIf="!stateService.env.MINING_DASHBOARD && stateService.env.BASE_MODULE === 'mempool'">
           <span placement="bottom" class="badge"
-            [class]="block.extras.pool.slug === 'unknown' ? 'badge-secondary' : 'badge-primary'">
+            [class]="block.extras.pool.slug === 'ocean' ? 'badge-primary' : 'badge-danger'">
             {{ block.extras.pool.name }}
         </span>
         </td>
