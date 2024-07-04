@@ -1,6 +1,6 @@
 import { Router, NavigationStart } from '@angular/router';
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { StateService } from './state.service';
 import { StorageService } from './storage.service';
 import { MenuGroup } from '../interfaces/services.interface';
@@ -120,6 +120,10 @@ export class ServicesApiServices {
     return this.httpClient.post(`${SERVICES_API_PREFIX}/auth/logout`, {});
   }
 
+  getJWT$() {
+    return this.httpClient.get<any>(`${SERVICES_API_PREFIX}/auth/getJWT`);
+  }
+
   getServicesBackendInfo$(): Observable<IBackendInfo> {
     return this.httpClient.get<IBackendInfo>(`${SERVICES_API_PREFIX}/version`);
   }
@@ -158,5 +162,29 @@ export class ServicesApiServices {
 
   setupSquare$(): Observable<{squareAppId: string, squareLocationId: string}> {
     return this.httpClient.get<{squareAppId: string, squareLocationId: string}>(`${SERVICES_API_PREFIX}/square/setup`);
+  }
+
+  getFaucetStatus$() {
+    return this.httpClient.get<{ address?: string, min: number, max: number, code: 'ok' | 'faucet_not_available' | 'faucet_maximum_reached' | 'faucet_too_soon'}>(`${SERVICES_API_PREFIX}/testnet4/faucet/status`, { responseType: 'json' });
+  }
+
+  requestTestnet4Coins$(address: string, sats: number) {
+    return this.httpClient.get<{txid: string}>(`${SERVICES_API_PREFIX}/testnet4/faucet/request?address=${address}&sats=${sats}`, { responseType: 'json' });
+  }
+
+  generateBTCPayAcceleratorInvoice$(txid: string, sats: number): Observable<any> {
+    const params = {
+      product: txid,
+      amount: sats,
+    };
+    return this.httpClient.post<any>(`${SERVICES_API_PREFIX}/payments/bitcoin`, params);
+  }
+
+  retreiveInvoice$(invoiceId: string): Observable<any[]> {
+    return this.httpClient.get<any[]>(`${SERVICES_API_PREFIX}/payments/bitcoin/invoice?id=${invoiceId}`);
+  }
+
+  getPaymentStatus$(orderId: string): Observable<any[]> {
+    return this.httpClient.get<any[]>(`${SERVICES_API_PREFIX}/payments/bitcoin/check?order_id=${orderId}`);
   }
 }

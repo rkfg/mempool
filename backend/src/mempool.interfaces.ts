@@ -113,6 +113,7 @@ export interface TransactionExtended extends IEsploraApi.Transaction {
     vsize: number,
   };
   acceleration?: boolean;
+  acceleratedBy?: number[];
   replacement?: boolean;
   uid?: number;
   flags?: number;
@@ -290,6 +291,7 @@ export interface BlockExtension {
   coinbaseRaw: string;
   orphans: OrphanedBlock[] | null;
   coinbaseAddress: string | null;
+  coinbaseAddresses: string[] | null;
   coinbaseSignature: string | null;
   coinbaseSignatureAscii: string | null;
   virtualSize: number;
@@ -426,6 +428,7 @@ export interface Statistic {
 
 export interface OptimizedStatistic {
   added: string;
+  count: number;
   vbytes_per_second: number;
   total_fee: number;
   mempool_byte_weight: number;
@@ -435,7 +438,7 @@ export interface OptimizedStatistic {
 
 export interface TxTrackingInfo {
   replacedBy?: string,
-  position?: { block: number, vsize: number, accelerated?: boolean },
+  position?: { block: number, vsize: number, accelerated?: boolean, acceleratedBy?: number[] },
   cpfp?: {
     ancestors?: Ancestor[],
     bestDescendant?: Ancestor | null,
@@ -446,6 +449,7 @@ export interface TxTrackingInfo {
   },
   utxoSpent?: { [vout: number]: { vin: number, txid: string } },
   accelerated?: boolean,
+  acceleratedBy?: number[],
   confirmed?: boolean
 }
 

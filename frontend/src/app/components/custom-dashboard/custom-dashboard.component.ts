@@ -57,6 +57,7 @@ export class CustomDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   incomingGraphHeight: number = 300;
   graphHeight: number = 300;
   webGlEnabled = true;
+  isMobile: boolean = window.innerWidth <= 767.98;
 
   widgets;
 
@@ -231,8 +232,10 @@ export class CustomDashboardComponent implements OnInit, OnDestroy, AfterViewIni
             this.stateService.live2Chart$
               .pipe(
                 scan((acc, stats) => {
+                  const now = Date.now() / 1000;
+                  const start = now - (2 * 60 * 60);
                   acc.unshift(stats);
-                  acc = acc.slice(0, 120);
+                  acc = acc.filter(p => p.added >= start);
                   return acc;
                 }, (mempoolStats || []))
               ),
@@ -370,5 +373,6 @@ export class CustomDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       this.goggleResolution = 86;
       this.graphHeight = 310;
     }
+    this.isMobile = window.innerWidth <= 767.98;
   }
 }

@@ -2,7 +2,7 @@ import { Inject, Injectable, PLATFORM_ID, LOCALE_ID } from '@angular/core';
 import { ReplaySubject, BehaviorSubject, Subject, fromEvent, Observable } from 'rxjs';
 import { Transaction } from '../interfaces/electrs.interface';
 import { AccelerationDelta, HealthCheckHost, IBackendInfo, MempoolBlock, MempoolBlockUpdate, MempoolInfo, Recommendedfees, ReplacedTransaction, ReplacementInfo, isMempoolState } from '../interfaces/websocket.interface';
-import { Acceleration, BlockExtended, CpfpInfo, DifficultyAdjustment, MempoolPosition, OptimizedMempoolStats, RbfTree, TransactionStripped } from '../interfaces/node-api.interface';
+import { Acceleration, AccelerationPosition, BlockExtended, CpfpInfo, DifficultyAdjustment, MempoolPosition, OptimizedMempoolStats, RbfTree, TransactionStripped } from '../interfaces/node-api.interface';
 import { Router, NavigationStart } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { filter, map, scan, shareReplay } from 'rxjs/operators';
@@ -16,6 +16,7 @@ export interface MarkBlockState {
   mempoolBlockIndex?: number;
   txFeePerVSize?: number;
   mempoolPosition?: MempoolPosition;
+  accelerationPositions?: AccelerationPosition[];
 }
 
 export interface ILoadingIndicators { [name: string]: number; }
@@ -35,12 +36,14 @@ export interface Customization {
   dashboard: {
     widgets: {
       component: string;
+      mobileOrder?: number;
       props: { [key: string]: any };
     }[];
   };
 }
 
 export interface Env {
+  MAINNET_ENABLED: boolean;
   TESTNET_ENABLED: boolean;
   TESTNET4_ENABLED: boolean;
   SIGNET_ENABLED: boolean;
@@ -50,6 +53,7 @@ export interface Env {
   KEEP_BLOCKS_AMOUNT: number;
   OFFICIAL_MEMPOOL_SPACE: boolean;
   BASE_MODULE: string;
+  ROOT_NETWORK: string;
   NGINX_PROTOCOL?: string;
   NGINX_HOSTNAME?: string;
   NGINX_PORT?: string;
@@ -75,12 +79,14 @@ export interface Env {
 }
 
 const defaultEnv: Env = {
+  'MAINNET_ENABLED': true,
   'TESTNET_ENABLED': false,
   'TESTNET4_ENABLED': false,
   'SIGNET_ENABLED': false,
   'LIQUID_ENABLED': false,
   'LIQUID_TESTNET_ENABLED': false,
   'BASE_MODULE': 'mempool',
+  'ROOT_NETWORK': '',
   'ITEMS_PER_PAGE': 10,
   'KEEP_BLOCKS_AMOUNT': 8,
   'OFFICIAL_MEMPOOL_SPACE': false,
@@ -114,6 +120,7 @@ export class StateService {
   isMempoolSpaceBuild = window['isMempoolSpaceBuild'] ?? false;
   backend: 'esplora' | 'electrum' | 'none' = 'esplora';
   network = '';
+  lightningNetworks = ['', 'mainnet', 'bitcoin', 'testnet', 'signet'];
   lightning = false;
   blockVSize: number;
   env: Env;
@@ -143,7 +150,7 @@ export class StateService {
   utxoSpent$ = new Subject<object>();
   difficultyAdjustment$ = new ReplaySubject<DifficultyAdjustment>(1);
   mempoolTransactions$ = new Subject<Transaction>();
-  mempoolTxPosition$ = new Subject<{ txid: string, position: MempoolPosition, cpfp: CpfpInfo | null}>();
+  mempoolTxPosition$ = new BehaviorSubject<{ txid: string, position: MempoolPosition, cpfp: CpfpInfo | null, accelerationPositions?: AccelerationPosition[] }>(null);
   mempoolRemovedTransactions$ = new Subject<Transaction>();
   multiAddressTransactions$ = new Subject<{ [address: string]: { mempool: Transaction[], confirmed: Transaction[], removed: Transaction[] }}>();
   blockTransactions$ = new Subject<Transaction>();
@@ -322,7 +329,12 @@ export class StateService {
     // (?:preview\/)?                               optional "preview" prefix (non-capturing)
     // (testnet|signet)/                            network string (captured as networkMatches[1])
     // ($|\/)                                       network string must end or end with a slash
-    const networkMatches = url.match(/^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?(?:preview\/)?(testnet4?|signet)($|\/)/);
+    let networkMatches: object = url.match(/^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?(?:preview\/)?(testnet4?|signet)($|\/)/);
+
+    if (!networkMatches && this.env.ROOT_NETWORK) {
+      networkMatches = { 1: this.env.ROOT_NETWORK };
+    }
+
     switch (networkMatches && networkMatches[1]) {
       case 'signet':
         if (this.network !== 'signet') {
@@ -369,6 +381,10 @@ export class StateService {
     this.lightningChanged$.next(this.lightning);
   }
 
+  networkSupportsLightning() {
+    return this.env.LIGHTNING && this.lightningNetworks.includes(this.network);
+  }
+
   getHiddenProp(){
     const prefixes = ['webkit', 'moz', 'ms', 'o'];
     if ('hidden' in document) { return 'hidden'; }
@@ -392,6 +408,10 @@ export class StateService {
 
   isLiquid() {
     return this.network === 'liquid' || this.network === 'liquidtestnet';
+  }
+
+  isMainnet(): boolean {
+    return this.env.ROOT_NETWORK === '' && this.network === '';
   }
 
   isAnyTestnet(): boolean {
