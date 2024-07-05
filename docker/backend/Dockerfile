@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM node:20.15.0-buster-slim AS builder
 
 ARG commitHash

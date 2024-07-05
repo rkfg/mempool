@@ -6,7 +6,6 @@ services:
       AUDIT: "true"
       MAINNET_BLOCK_AUDIT_START_HEIGHT: "840000"
       LIGHTNING: "true"
-        #image: mempool/frontend:latest
     image: frontend:local
     user: "1000:1000"
     restart: unless-stopped
@@ -46,7 +45,6 @@ services:
       LIGHTNING_LOGGER_UPDATE_INTERVAL: 30
       NODE_OPTIONS: "--max-old-space-size=6000"
 
-        #image: mempool/backend:latest
     image: backend:local
     user: "1000:1000"
     restart: unless-stopped
