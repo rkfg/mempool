@@ -114,6 +114,7 @@ export interface TransactionExtended extends IEsploraApi.Transaction {
   };
   acceleration?: boolean;
   acceleratedBy?: number[];
+  acceleratedAt?: number;
   replacement?: boolean;
   uid?: number;
   flags?: number;
@@ -438,7 +439,7 @@ export interface OptimizedStatistic {
 
 export interface TxTrackingInfo {
   replacedBy?: string,
-  position?: { block: number, vsize: number, accelerated?: boolean, acceleratedBy?: number[] },
+  position?: { block: number, vsize: number, accelerated?: boolean, acceleratedBy?: number[], acceleratedAt?: number },
   cpfp?: {
     ancestors?: Ancestor[],
     bestDescendant?: Ancestor | null,
@@ -450,6 +451,7 @@ export interface TxTrackingInfo {
   utxoSpent?: { [vout: number]: { vin: number, txid: string } },
   accelerated?: boolean,
   acceleratedBy?: number[],
+  acceleratedAt?: number,
   confirmed?: boolean
 }
 

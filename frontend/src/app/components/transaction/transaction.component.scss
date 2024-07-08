@@ -167,6 +167,12 @@
 	}
 }
 
+@media (max-width: 767px){
+  .hide-on-mobile {
+    display: none;
+  }
+}
+
 .effective-fee-rating {
   @media (max-width: 767px){
     margin-right: 0px !important;
@@ -318,4 +324,12 @@
 .goggles-icon {
   display: block;
   width: 2.7em;
+}
+
+.pool-logo {
+  width: 15px;
+  height: 15px;
+  position: relative;
+  top: -1px;
+  margin-right: 2px;
 }

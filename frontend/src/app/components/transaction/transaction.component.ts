@@ -51,6 +51,7 @@ interface AuditStatus {
   accelerated?: boolean;
   conflict?: boolean;
   coinbase?: boolean;
+  firstSeen?: number;
 }
 
 @Component({
@@ -64,6 +65,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
   txId: string;
   txInBlockIndex: number;
   mempoolPosition: MempoolPosition;
+  gotInitialPosition = false;
   accelerationPositions: AccelerationPosition[];
   isLoadingTx = true;
   error: any = undefined;
@@ -111,6 +113,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
   txChanged$ = new BehaviorSubject<boolean>(false); // triggered whenever this.tx changes (long term, we should refactor to make this.tx an observable itself)
   isAccelerated$ = new BehaviorSubject<boolean>(false); // refactor this to make isAccelerated an observable itself
   ETA$: Observable<ETA | null>;
+  standardETA$: Observable<ETA | null>;
   isCached: boolean = false;
   now = Date.now();
   da$: Observable<DifficultyAdjustment>;
@@ -325,7 +328,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
           const boostCost = acceleration.boostCost || acceleration.bidBoost;
           acceleration.acceleratedFeeRate = Math.max(acceleration.effectiveFee, acceleration.effectiveFee + boostCost) / acceleration.effectiveVsize;
           acceleration.boost = boostCost;
-
+          this.tx.acceleratedAt = acceleration.added;
           this.accelerationInfo = acceleration;
           this.setIsAccelerated();
         }
@@ -368,6 +371,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
             const isAccelerated = audit.acceleratedTxs.includes(txid);
             const isConflict = audit.fullrbfTxs.includes(txid);
             const isExpected = audit.template.some(tx => tx.txid === txid);
+            const firstSeen = audit.template.find(tx => tx.txid === txid)?.time;
             return {
               seen: isExpected || isPrioritized || isAccelerated,
               expected: isExpected,
@@ -375,6 +379,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
               prioritized: isPrioritized,
               conflict: isConflict,
               accelerated: isAccelerated,
+              firstSeen,
             };
           }),
           retry({ count: 3, delay: 2000 }),
@@ -388,6 +393,9 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
       })
     ).subscribe(auditStatus => {
       this.auditStatus = auditStatus;
+      if (this.auditStatus?.firstSeen) {
+        this.transactionTime = this.auditStatus.firstSeen;
+      }
       this.setIsAccelerated();
     });
 
@@ -425,9 +433,13 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
               if (txPosition.position?.block > 0 && this.tx.weight < 4000) {
                 this.cashappEligible = true;
               }
+              if (!this.gotInitialPosition && txPosition.position?.block === 0 && txPosition.position?.vsize < 750_000) {
+                this.accelerationFlowCompleted = true;
+              }
             }
           }
         }
+        this.gotInitialPosition = true;
       } else {
         this.mempoolPosition = null;
         this.accelerationPositions = null;
@@ -771,6 +783,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
     if (cpfpInfo.acceleration) {
       this.tx.acceleration = cpfpInfo.acceleration;
       this.tx.acceleratedBy = cpfpInfo.acceleratedBy;
+      this.tx.acceleratedAt = cpfpInfo.acceleratedAt;
       this.setIsAccelerated(firstCpfp);
     }
 
@@ -802,6 +815,21 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
         this.miningStats = stats;
         this.isAccelerated$.next(this.isAcceleration); // hack to trigger recalculation of ETA without adding another source observable
       });
+      if (!this.tx.status?.confirmed) {
+        this.standardETA$ = combineLatest([
+          this.stateService.mempoolBlocks$.pipe(startWith(null)),
+          this.stateService.difficultyAdjustment$.pipe(startWith(null)),
+        ]).pipe(
+          map(([mempoolBlocks, da]) => {
+            return this.etaService.calculateUnacceleratedETA(
+              this.tx,
+              mempoolBlocks,
+              da,
+              this.cpfpInfo,
+            );
+          })
+        )
+      }
     }
     this.isAccelerated$.next(this.isAcceleration);
   }
@@ -857,6 +885,7 @@ export class TransactionComponent implements OnInit, AfterViewInit, OnDestroy {
 
   resetTransaction() {
     this.firstLoad = false;
+    this.gotInitialPosition = false;
     this.error = undefined;
     this.tx = null;
     this.txChanged$.next(true);
