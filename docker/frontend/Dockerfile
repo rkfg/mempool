@@ -7,9 +7,9 @@ ENV DOCKER_COMMIT_HASH=${commitHash}
 ENV CYPRESS_INSTALL_BINARY=0
 
 WORKDIR /build
-COPY . .
 RUN apt-get update
 RUN apt-get install -y build-essential rsync
+COPY . .
 RUN cp mempool-frontend-config.sample.json mempool-frontend-config.json
 RUN npm install --omit=dev --omit=optional
 
