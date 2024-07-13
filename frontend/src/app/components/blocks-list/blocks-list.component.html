@@ -50,14 +50,14 @@
           </td>
           <td *ngIf="auditAvailable" class="health text-right" [ngClass]="{'widget': widget, 'legacy': !isMempoolModule}">
             <a
-              *ngIf="block?.extras?.matchRate != null; else nullHealth"
+              *ngIf="block?.extras?.matchRateWU != null; else nullHealth"
               class="health-badge badge"
-              [class.badge-success]="block.extras.matchRate >= 99"
-              [class.badge-warning]="block.extras.matchRate >= 75 && block.extras.matchRate < 99"
-              [class.badge-danger]="block.extras.matchRate < 75"
-              [routerLink]="block.extras.matchRate != null ? ['/block/' | relativeUrl, block.id] : null"
+              [class.badge-success]="block.extras.matchRateWU >= 99"
+              [class.badge-warning]="block.extras.matchRateWU >= 75 && block.extras.matchRateWU < 99"
+              [class.badge-danger]="block.extras.matchRateWU < 75"
+              [routerLink]="block.extras.matchRateWU != null ? ['/block/' | relativeUrl, block.id] : null"
               [state]="{ data: { block: block } }"
-            >{{ block.extras.matchRate }}%</a>
+            >{{ block.extras.matchRateWU }}%</a>
             <ng-template #nullHealth>
               <span class="health-badge badge badge-secondary" i18n="unknown">Unknown</span>
             </ng-template>
