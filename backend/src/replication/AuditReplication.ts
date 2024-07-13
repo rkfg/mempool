@@ -120,7 +120,7 @@ class AuditReplication {
       fullrbfTxs: auditSummary.fullrbfTxs || [],
       acceleratedTxs: auditSummary.acceleratedTxs || [],
       matchRate: auditSummary.matchRate,
-      matchRateWU: 0,
+      matchRateWU: auditSummary.matchRateWU,
       expectedFees: auditSummary.expectedFees,
       expectedWeight: auditSummary.expectedWeight,
     });
@@ -128,6 +128,7 @@ class AuditReplication {
     const cachedBlock = blocks.getBlocks().find(block => block.id === blockHash);
     if (cachedBlock) {
       cachedBlock.extras.matchRate = auditSummary.matchRate;
+      cachedBlock.extras.matchRateWU = auditSummary.matchRateWU;
       cachedBlock.extras.expectedFees = auditSummary.expectedFees || null;
       cachedBlock.extras.expectedWeight = auditSummary.expectedWeight || null;
     }

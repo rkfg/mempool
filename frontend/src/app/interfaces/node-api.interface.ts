@@ -283,6 +283,7 @@ export interface BlockSizesAndWeights {
 export interface AuditScore {
   hash: string;
   matchRate?: number;
+  matchRateWU?: number;
 }
 
 export interface ITopNodesPerChannels {

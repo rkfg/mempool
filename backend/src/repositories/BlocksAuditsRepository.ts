@@ -102,21 +102,7 @@ class BlocksAuditRepositories {
   public async $getBlockAuditScore(hash: string): Promise<AuditScore> {
     try {
       const [rows]: any[] = await DB.query(
-        `SELECT hash, match_rate as matchRate, expected_fees as expectedFees, expected_weight as expectedWeight
-        FROM blocks_audits
-        WHERE blocks_audits.hash = ?
-      `, [hash]);
-      return rows[0];
-    } catch (e: any) {
-      logger.err(`Cannot fetch block audit from db. Reason: ` + (e instanceof Error ? e.message : e));
-      throw e;
-    }
-  }
-
-  public async $getBlockAuditScoreWU(hash: string): Promise<AuditScore> {
-    try {
-      const [rows]: any[] = await DB.query(
-        `SELECT hash, match_rateWU as matchRateWU
+        `SELECT hash, match_rate as matchRate, match_rateWU as matchRateWU, expected_fees as expectedFees, expected_weight as expectedWeight
         FROM blocks_audits
         WHERE blocks_audits.hash = ?
       `, [hash]);
@@ -130,7 +116,7 @@ class BlocksAuditRepositories {
   public async $getBlockAuditScores(maxHeight: number, minHeight: number): Promise<AuditScore[]> {
     try {
       const [rows]: any[] = await DB.query(
-        `SELECT hash, match_rate as matchRate, expected_fees as expectedFees, expected_weight as expectedWeight
+        `SELECT hash, match_rate as matchRate, match_rateWU as matchRateWU, expected_fees as expectedFees, expected_weight as expectedWeight
         FROM blocks_audits
         WHERE blocks_audits.height BETWEEN ? AND ?
       `, [minHeight, maxHeight]);
